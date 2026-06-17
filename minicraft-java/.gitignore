@@ -1,0 +1,4 @@
+target/
+*.sav
+screenshot_*.png
+dependency-reduced-pom.xml
