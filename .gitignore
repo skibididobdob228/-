@@ -1,0 +1,6 @@
+/build/
+*.sav
+screenshot_*.png
+*.o
+*.obj
+compile_commands.json
