@@ -89,6 +89,26 @@ cmake --build build -j
 The executable finds `assets/shaders/` relative to the source tree
 (via a compiled-in path) or via `./assets`.
 
+### Windows
+
+**Prebuilt:** download `MiniCraft-Windows-x64.zip`, extract it, and run
+`minicraft.exe` (keep the `assets` folder beside it). No installation or extra
+DLLs are required on Windows 10/11 x64.
+
+**Build with MSVC + vcpkg:**
+```bat
+vcpkg install glfw3 glew glm
+cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=<vcpkg>/scripts/buildsystems/vcpkg.cmake
+cmake --build build --config Release
+```
+
+**Cross-compile from Linux (MinGW-w64):** produces the self-contained zip with a
+statically linked GLFW + GLEW (no bundled DLLs):
+```bash
+sudo apt-get install -y g++-mingw-w64-x86-64 mingw-w64-tools libglm-dev curl unzip zip
+scripts/build-windows.sh        # -> MiniCraft-Windows-x64.zip
+```
+
 ## Architecture
 
 ```

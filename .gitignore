@@ -1,4 +1,6 @@
 /build/
+/build-win/
+MiniCraft-Windows-x64.zip
 *.sav
 screenshot_*.png
 *.o
