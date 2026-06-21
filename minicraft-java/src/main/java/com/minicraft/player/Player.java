@@ -2,6 +2,9 @@ package com.minicraft.player;
 
 import com.minicraft.render.Camera;
 import com.minicraft.world.Blocks;
+import com.minicraft.world.Inventory;
+import com.minicraft.world.ItemStack;
+import com.minicraft.world.Items;
 import com.minicraft.world.World;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
@@ -19,12 +22,7 @@ public class Player {
     public boolean dead;
     public float mouseSensitivity = 0.12f;
 
-    public static final int HOTBAR_SIZE = 9;
-    public final int[] hotbar = {
-        Blocks.GRASS, Blocks.DIRT, Blocks.STONE, Blocks.PLANKS, Blocks.GLASS,
-        Blocks.GLOWSTONE, Blocks.LOG, Blocks.OBSIDIAN, Blocks.TORCH
-    };
-    public int selectedSlot = 0;
+    public final Inventory inventory = new Inventory();
 
     private static final float GRAVITY = 28f, JUMP = 8.6f, WALK = 4.6f, SPRINT = 6.2f, FLY = 12f;
 
@@ -33,11 +31,14 @@ public class Player {
     private double lastJumpTime = -10;
     private float regenTimer;
 
-    public int selectedBlock() { return hotbar[selectedSlot]; }
-
-    public void scrollHotbar(int dir) {
-        selectedSlot = Math.floorMod(selectedSlot - dir, HOTBAR_SIZE);
+    /** The block id the selected hotbar item would place, or AIR if not placeable. */
+    public int selectedBlock() {
+        ItemStack s = inventory.selectedStack();
+        if (s.isEmpty()) return Blocks.AIR;
+        return Items.isBlock(s.item) ? Items.blockId(s.item) : Blocks.AIR;
     }
+
+    public void scrollHotbar(int dir) { inventory.scroll(dir); }
 
     public void toggleMode() {
         mode = switch (mode) {

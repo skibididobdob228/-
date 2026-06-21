@@ -10,7 +10,14 @@ public final class Blocks {
             GLOWSTONE = 19, PUMPKIN = 20, CACTUS = 21, FLOWER = 22, TALLGRASS = 23, TORCH = 24,
             OBSIDIAN = 25, PORTAL = 26, NETHERRACK = 27, LAVA = 28, SOUL_SAND = 29,
             NETHER_BRICK = 30, QUARTZ = 31, END_STONE = 32, END_PORTAL = 33, END_FRAME = 34,
-            MAGMA = 35, COUNT = 36;
+            MAGMA = 35,
+            SPRUCE_PLANKS = 36, BIRCH_PLANKS = 37, GRANITE = 38, DIORITE = 39, ANDESITE = 40,
+            STONE_BRICKS = 41, MOSSY_COBBLE = 42, SANDSTONE = 43, REDSTONE_ORE = 44,
+            LAPIS_ORE = 45, EMERALD_ORE = 46, ICE = 47, CLAY = 48,
+            WOOL_WHITE = 49, WOOL_RED = 50, WOOL_BLUE = 51, WOOL_GREEN = 52, WOOL_YELLOW = 53,
+            WOOL_BLACK = 54, CRAFTING_TABLE = 55, FURNACE = 56, CHEST = 57, BOOKSHELF = 58,
+            SPRUCE_LOG = 59, BIRCH_LOG = 60,
+            COUNT = 61;
 
     public enum Render { AIR, SOLID, TRANSPARENT, LIQUID, CROSS }
 
@@ -58,6 +65,35 @@ public final class Blocks {
         DEFS[GLOWSTONE].light = 15;
         solid(MAGMA, "magma", Tiles.MAGMA, Tiles.MAGMA, Tiles.MAGMA, 0.5f);
         DEFS[MAGMA].light = 3;
+
+        // --- Added blocks ---
+        solid(SPRUCE_PLANKS, "spruce_planks", Tiles.SPRUCE_PLANKS, Tiles.SPRUCE_PLANKS, Tiles.SPRUCE_PLANKS, 2.0f);
+        solid(BIRCH_PLANKS, "birch_planks", Tiles.BIRCH_PLANKS, Tiles.BIRCH_PLANKS, Tiles.BIRCH_PLANKS, 2.0f);
+        solid(GRANITE, "granite", Tiles.GRANITE, Tiles.GRANITE, Tiles.GRANITE, 1.5f);
+        solid(DIORITE, "diorite", Tiles.DIORITE, Tiles.DIORITE, Tiles.DIORITE, 1.5f);
+        solid(ANDESITE, "andesite", Tiles.ANDESITE, Tiles.ANDESITE, Tiles.ANDESITE, 1.5f);
+        solid(STONE_BRICKS, "stone_bricks", Tiles.STONE_BRICKS, Tiles.STONE_BRICKS, Tiles.STONE_BRICKS, 1.5f);
+        solid(MOSSY_COBBLE, "mossy_cobblestone", Tiles.MOSSY_COBBLE, Tiles.MOSSY_COBBLE, Tiles.MOSSY_COBBLE, 2.0f);
+        solid(SANDSTONE, "sandstone", Tiles.SANDSTONE, Tiles.SANDSTONE, Tiles.SANDSTONE, 0.8f);
+        solid(REDSTONE_ORE, "redstone_ore", Tiles.REDSTONE_ORE, Tiles.REDSTONE_ORE, Tiles.REDSTONE_ORE, 3.0f);
+        solid(LAPIS_ORE, "lapis_ore", Tiles.LAPIS_ORE, Tiles.LAPIS_ORE, Tiles.LAPIS_ORE, 3.0f);
+        solid(EMERALD_ORE, "emerald_ore", Tiles.EMERALD_ORE, Tiles.EMERALD_ORE, Tiles.EMERALD_ORE, 3.0f);
+        solid(CLAY, "clay", Tiles.CLAY, Tiles.CLAY, Tiles.CLAY, 0.6f);
+        solid(WOOL_WHITE, "white_wool", Tiles.WOOL_WHITE, Tiles.WOOL_WHITE, Tiles.WOOL_WHITE, 0.8f);
+        solid(WOOL_RED, "red_wool", Tiles.WOOL_RED, Tiles.WOOL_RED, Tiles.WOOL_RED, 0.8f);
+        solid(WOOL_BLUE, "blue_wool", Tiles.WOOL_BLUE, Tiles.WOOL_BLUE, Tiles.WOOL_BLUE, 0.8f);
+        solid(WOOL_GREEN, "green_wool", Tiles.WOOL_GREEN, Tiles.WOOL_GREEN, Tiles.WOOL_GREEN, 0.8f);
+        solid(WOOL_YELLOW, "yellow_wool", Tiles.WOOL_YELLOW, Tiles.WOOL_YELLOW, Tiles.WOOL_YELLOW, 0.8f);
+        solid(WOOL_BLACK, "black_wool", Tiles.WOOL_BLACK, Tiles.WOOL_BLACK, Tiles.WOOL_BLACK, 0.8f);
+        solid(CRAFTING_TABLE, "crafting_table", Tiles.CRAFTING_TOP, Tiles.CRAFTING_FRONT, Tiles.PLANKS, 2.5f);
+        solid(FURNACE, "furnace", Tiles.FURNACE_TOP, Tiles.FURNACE_FRONT, Tiles.FURNACE_TOP, 3.5f);
+        solid(CHEST, "chest", Tiles.CHEST_TOP, Tiles.CHEST_FRONT, Tiles.CHEST_TOP, 2.5f);
+        solid(BOOKSHELF, "bookshelf", Tiles.PLANKS, Tiles.BOOKSHELF, Tiles.PLANKS, 1.5f);
+        solid(SPRUCE_LOG, "spruce_log", Tiles.LOG_TOP, Tiles.SPRUCE_LOG_SIDE, Tiles.LOG_TOP, 2.0f);
+        solid(BIRCH_LOG, "birch_log", Tiles.LOG_TOP, Tiles.BIRCH_LOG_SIDE, Tiles.LOG_TOP, 2.0f);
+
+        // Ice: transparent solid (slightly see-through).
+        transparent(ICE, "ice", Tiles.ICE, 0.5f);
 
         transparent(LEAVES, "leaves", Tiles.LEAVES, 0.2f);
         transparent(GLASS, "glass", Tiles.GLASS, 0.3f);

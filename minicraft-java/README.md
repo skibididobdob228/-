@@ -2,12 +2,38 @@
 
 A Minecraft-style voxel game written from scratch in Java with **LWJGL 3** (the
 same OpenGL/GLFW binding the real Minecraft uses) and **JOML** for math. It has
-all three dimensions — **Overworld, Nether, and End** — with portal travel
-between them.
+all three dimensions — **Overworld, Nether, and End** — with portal travel,
+a main menu, a full inventory with crafting, a survival mode, clouds and an
+animated first-person hand.
+
+| Main menu | World + clouds + hand | Creative inventory | Survival crafting |
+|-----------|-----------------------|--------------------|-------------------|
+| ![](../docs/java-menu.png) | ![](../docs/java-world-clouds.png) | ![](../docs/java-inventory.png) | ![](../docs/java-crafting.png) |
 
 | Overworld | Nether | End |
 |-----------|--------|-----|
 | ![](../docs/java-overworld.png) | ![](../docs/java-nether.png) | ![](../docs/java-end.png) |
+
+## What's new
+
+- **Main menu** with New World (Survival/Creative), Continue, Quit; in-game
+  pause menu (Resume / Save & Quit to Title). Text is rendered with a bitmap
+  font baked at startup.
+- **Inventory & crafting** (Minecraft-style): 9-hotbar + 27-storage, a 3×3
+  crafting grid with shaped & shapeless recipes (planks, sticks, crafting
+  table, chest, furnace, torches, stone bricks, full tool sets, …), drag-and-
+  drop with a cursor stack, and a creative item palette of every block/item.
+- **Survival mode**: blocks drop items when mined, placing consumes the stack,
+  health & hunger with fall/lava/cactus/starvation damage, a starter kit and a
+  death/respawn flow.
+- **Sky with clouds**: a scrolling blocky cloud layer over the Overworld.
+- **Animated first-person hand** that holds the selected block/item, swings on
+  use and bobs while walking.
+- **20+ extra blocks**: spruce/birch wood, granite/diorite/andesite, stone
+  bricks, mossy cobble, sandstone, redstone/lapis/emerald ore, wool colours,
+  ice, clay, crafting table, furnace, chest, bookshelf — plus new items
+  (sticks, ingots, gems, tools, apple). Procedural textures were refined to
+  look closer to vanilla.
 
 ## Textures
 
@@ -45,9 +71,14 @@ procedural textures are used.
 
 `WASD` move · mouse look · `Space` jump/fly up · `Shift` sneak/fly down ·
 `Ctrl` sprint · double-tap `Space` toggle flight (Creative) · left/right mouse
-break/place · wheel or `1`–`9` select hotbar · `G` game mode · `F` light nether
-portal · `O`/`N`/`M` go to Overworld/Nether/End · `F5` first/third person ·
-`F3` debug · `F2` screenshot · `F11` fullscreen · `R` respawn · `Esc` pause.
+break/place · wheel or `1`–`9` select hotbar · `E` inventory · `G` game mode ·
+`F` light nether portal (look at an obsidian frame) · `O`/`N`/`M` go to
+Overworld/Nether/End · `F5` first/third person · `F3` debug · `F2` screenshot ·
+`F11` fullscreen · `R` respawn · `Esc` pause/menu.
+
+Right-click a **crafting table** to open the crafting grid. In creative, the
+inventory is an item palette — click an item to grab it, then drop it on the
+hotbar.
 
 The dimension, FPS, position and mode are shown in the window title bar.
 

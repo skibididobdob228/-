@@ -310,4 +310,11 @@ public class World {
     public void shutdownGpu() {
         for (Chunk c : chunks.values()) deleteGpu(c);
     }
+
+    /** Reset to a fresh world (drop edits and loaded chunks). Main thread only. */
+    public void clearEdits() {
+        editedStore.clear();
+        for (Chunk c : chunks.values()) deleteGpu(c);
+        chunks.clear();
+    }
 }

@@ -60,6 +60,7 @@ public class Shader {
 
     public void set(String n, int v) { glUniform1i(loc(n), v); }
     public void set(String n, float v) { glUniform1f(loc(n), v); }
+    public void set(String n, org.joml.Vector2f v) { glUniform2f(loc(n), v.x, v.y); }
     public void set(String n, Vector3f v) { glUniform3f(loc(n), v.x, v.y, v.z); }
     public void set(String n, Vector4f v) { glUniform4f(loc(n), v.x, v.y, v.z, v.w); }
 

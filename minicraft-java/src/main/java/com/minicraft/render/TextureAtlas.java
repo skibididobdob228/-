@@ -229,6 +229,180 @@ public class TextureAtlas {
         // Cells 1..3 in the end frame get a greenish "eye".
         for (int y = 3; y < 13; y++)
             for (int x = 3; x < 13; x++) put(END_FRAME, x, y, 60, 120, 90, 255);
+
+        generateExtra();
+    }
+
+    private void generateExtra() {
+        // Wood planks variants.
+        planks(SPRUCE_PLANKS, 104, 78, 52);
+        planks(BIRCH_PLANKS, 198, 180, 140);
+        // Stone variants.
+        fillNoise(GRANITE, 150, 100, 90, 0.14f, 60);
+        fillNoise(DIORITE, 200, 200, 200, 0.16f, 61);
+        fillNoise(ANDESITE, 130, 132, 134, 0.12f, 62);
+        fillNoise(SANDSTONE, 216, 202, 150, 0.06f, 63);
+        // Stone bricks.
+        for (int y = 0; y < TILE_PX; y++)
+            for (int x = 0; x < TILE_PX; x++) {
+                boolean seam = (y % 8 == 0) || (x % 8 == 0 && y % 8 < 8);
+                float n = (h01(x, y, 64) - 0.5f) * 0.10f;
+                if (seam) put(STONE_BRICKS, x, y, 90, 90, 94, 255);
+                else put(STONE_BRICKS, x, y, (int)(120*(1+n)), (int)(120*(1+n)), (int)(124*(1+n)), 255);
+            }
+        // Mossy cobblestone.
+        for (int y = 0; y < TILE_PX; y++)
+            for (int x = 0; x < TILE_PX; x++) {
+                float n = (h01(x, y, 2) - 0.5f) * 0.22f;
+                boolean moss = h01(x, y, 65) > 0.6f;
+                if (moss) put(MOSSY_COBBLE, x, y, (int)(70*(1+n)), (int)(110*(1+n)), (int)(55*(1+n)), 255);
+                else put(MOSSY_COBBLE, x, y, (int)(120*(1+n)), (int)(120*(1+n)), (int)(124*(1+n)), 255);
+            }
+        // Ores.
+        ore(REDSTONE_ORE, 200, 30, 30, 70);
+        ore(LAPIS_ORE, 40, 70, 200, 71);
+        ore(EMERALD_ORE, 40, 200, 90, 72);
+        // Ice (translucent blue).
+        for (int y = 0; y < TILE_PX; y++)
+            for (int x = 0; x < TILE_PX; x++) {
+                float n = (h01(x, y, 66) - 0.5f) * 0.08f;
+                put(ICE, x, y, (int)(150*(1+n)), (int)(190*(1+n)), (int)(230*(1+n)), 200);
+            }
+        fillNoise(CLAY, 160, 165, 175, 0.06f, 67);
+        // Wool colours.
+        wool(WOOL_WHITE, 235, 235, 235);
+        wool(WOOL_RED, 180, 50, 50);
+        wool(WOOL_BLUE, 50, 70, 180);
+        wool(WOOL_GREEN, 70, 150, 60);
+        wool(WOOL_YELLOW, 220, 200, 60);
+        wool(WOOL_BLACK, 35, 35, 38);
+        // Spruce / birch log bark.
+        for (int y = 0; y < TILE_PX; y++)
+            for (int x = 0; x < TILE_PX; x++) {
+                float n = (h01(x, y, 68) - 0.5f) * 0.18f;
+                int v = (x % 5 == 0) ? 70 : 100;
+                put(SPRUCE_LOG_SIDE, x, y, (int)(70*(1+n)*v/100), (int)(52*(1+n)*v/100), (int)(35*(1+n)*v/100), 255);
+            }
+        for (int y = 0; y < TILE_PX; y++)
+            for (int x = 0; x < TILE_PX; x++) {
+                float n = (h01(x, y, 69) - 0.5f) * 0.10f;
+                boolean mark = (x == 3 || x == 11) && (y % 6 < 2);
+                if (mark) put(BIRCH_LOG_SIDE, x, y, 60, 60, 55, 255);
+                else put(BIRCH_LOG_SIDE, x, y, (int)(220*(1+n)), (int)(218*(1+n)), (int)(205*(1+n)), 255);
+            }
+        // Crafting table.
+        planks(CRAFTING_TOP, 150, 110, 70);
+        for (int y = 0; y < 8; y++) for (int x = 0; x < TILE_PX; x++) { } // grid drawn below
+        for (int y = 0; y < TILE_PX; y++)
+            for (int x = 0; x < TILE_PX; x++) {
+                boolean grid = (x == 0 || x == 8 || x == 15 || y == 0 || y == 8 || y == 15);
+                if (grid) put(CRAFTING_TOP, x, y, 90, 60, 35, 255);
+            }
+        planks(CRAFTING_SIDE, 140, 100, 64);
+        planks(CRAFTING_FRONT, 140, 100, 64);
+        for (int y = 4; y < 12; y++) for (int x = 3; x < 13; x++) put(CRAFTING_FRONT, x, y, 90, 64, 40, 255);
+        // Furnace.
+        fillNoise(FURNACE_TOP, 110, 110, 114, 0.10f, 73);
+        fillNoise(FURNACE_SIDE, 110, 110, 114, 0.10f, 74);
+        fillNoise(FURNACE_FRONT, 110, 110, 114, 0.10f, 75);
+        for (int y = 5; y < 13; y++) for (int x = 4; x < 12; x++) put(FURNACE_FRONT, x, y, 40, 40, 44, 255);
+        for (int y = 8; y < 12; y++) for (int x = 5; x < 11; x++) put(FURNACE_FRONT, x, y, 230, 120, 40, 255);
+        // Chest.
+        fillNoise(CHEST_TOP, 150, 110, 60, 0.06f, 76);
+        fillNoise(CHEST_SIDE, 150, 110, 60, 0.06f, 77);
+        fillNoise(CHEST_FRONT, 150, 110, 60, 0.06f, 78);
+        for (int x = 0; x < TILE_PX; x++) { put(CHEST_FRONT, x, 7, 90, 60, 30, 255); put(CHEST_FRONT, x, 8, 90, 60, 30, 255); }
+        put(CHEST_FRONT, 7, 8, 60, 60, 60, 255); put(CHEST_FRONT, 8, 8, 60, 60, 60, 255); // latch
+        // Bookshelf.
+        planks(BOOKSHELF, 150, 110, 70);
+        int[] bookCols = {180,60,60, 60,120,180, 70,160,70, 200,180,60, 150,90,170};
+        for (int row = 0; row < 2; row++)
+            for (int bx = 0; bx < 14; bx += 3) {
+                int ci = ((bx / 3) % 5) * 3;
+                int x0 = 1 + bx;
+                int y0 = 2 + row * 7;
+                for (int yy = y0; yy < y0 + 5 && yy < 16; yy++)
+                    for (int xx = x0; xx < x0 + 2 && xx < 16; xx++)
+                        put(BOOKSHELF, xx, yy, bookCols[ci], bookCols[ci+1], bookCols[ci+2], 255);
+            }
+
+        // --- Item icons ---
+        clear(ITEM_STICK);
+        for (int y = 4; y < 14; y++) { put(ITEM_STICK, 7, y, 140, 100, 55, 255); put(ITEM_STICK, 8, y, 120, 84, 45, 255); }
+        gem(ITEM_COAL, 40, 40, 40);
+        gem(ITEM_IRON, 220, 200, 185);
+        gem(ITEM_GOLD, 245, 215, 70);
+        gem(ITEM_DIAMOND, 110, 230, 230);
+        gem(ITEM_REDSTONE, 210, 40, 40);
+        gem(ITEM_LAPIS, 50, 80, 200);
+        gem(ITEM_EMERALD, 50, 210, 100);
+        // Apple.
+        clear(ITEM_APPLE);
+        for (int y = 4; y < 14; y++)
+            for (int x = 4; x < 13; x++)
+                if (Math.hypot(x - 8, y - 9) < 4.2) put(ITEM_APPLE, x, y, 200, 40, 45, 255);
+        put(ITEM_APPLE, 8, 3, 90, 60, 40, 255); put(ITEM_APPLE, 9, 4, 70, 140, 60, 255);
+        // Tools (handle + coloured head).
+        tool(ITEM_PICK_WOOD, 150, 110, 70, 0);
+        tool(ITEM_PICK_STONE, 130, 130, 134, 0);
+        tool(ITEM_PICK_IRON, 220, 200, 185, 0);
+        tool(ITEM_PICK_DIAMOND, 110, 230, 230, 0);
+        tool(ITEM_AXE_WOOD, 150, 110, 70, 1);
+        tool(ITEM_AXE_STONE, 130, 130, 134, 1);
+        tool(ITEM_SHOVEL_WOOD, 150, 110, 70, 2);
+        tool(ITEM_SWORD_WOOD, 150, 110, 70, 3);
+        tool(ITEM_SWORD_STONE, 130, 130, 134, 3);
+        tool(ITEM_SWORD_IRON, 220, 200, 185, 3);
+    }
+
+    private void planks(int tile, int r, int g, int b) {
+        for (int y = 0; y < TILE_PX; y++)
+            for (int x = 0; x < TILE_PX; x++) {
+                float n = (h01(x, y, 10) - 0.5f) * 0.12f;
+                int v = (y % 4 == 0) ? 72 : 100;
+                put(tile, x, y, (int)(r*(1+n)*v/100), (int)(g*(1+n)*v/100), (int)(b*(1+n)*v/100), 255);
+            }
+    }
+
+    private void wool(int tile, int r, int g, int b) {
+        for (int y = 0; y < TILE_PX; y++)
+            for (int x = 0; x < TILE_PX; x++) {
+                float n = (h01(x, y, 90) - 0.5f) * 0.10f;
+                put(tile, x, y, (int)(r*(1+n)), (int)(g*(1+n)), (int)(b*(1+n)), 255);
+            }
+    }
+
+    private void gem(int tile, int r, int g, int b) {
+        clear(tile);
+        for (int y = 5; y < 12; y++)
+            for (int x = 5; x < 12; x++) {
+                float n = (h01(x, y, 91) - 0.5f) * 0.2f;
+                if (Math.abs(x - 8) + Math.abs(y - 8) <= 4)
+                    put(tile, x, y, (int)(r*(1+n)), (int)(g*(1+n)), (int)(b*(1+n)), 255);
+            }
+    }
+
+    /** kind: 0 pickaxe, 1 axe, 2 shovel, 3 sword. */
+    private void tool(int tile, int r, int g, int b, int kind) {
+        clear(tile);
+        // Wooden handle along the diagonal.
+        for (int i = 4; i < 13; i++) put(tile, i, 16 - i, 140, 100, 55, 255);
+        for (int i = 4; i < 13; i++) if (16 - i - 1 >= 0) put(tile, i, 15 - i, 120, 84, 45, 255);
+        if (kind == 3) { // sword: blade up the diagonal, guard
+            for (int i = 3; i < 12; i++) put(tile, i, 13 - i, r, g, b, 255);
+            put(tile, 4, 11, 120, 84, 45, 255); put(tile, 5, 12, 120, 84, 45, 255);
+            return;
+        }
+        // Head at top-right.
+        for (int y = 2; y < 6; y++)
+            for (int x = 9; x < 14; x++) {
+                boolean head = switch (kind) {
+                    case 0 -> y == 2 || x == 9 || x == 13;        // pickaxe bar
+                    case 1 -> x >= 11 && y <= 4;                  // axe blade
+                    default -> x >= 11 && x <= 12 && y <= 5;      // shovel scoop
+                };
+                if (head) put(tile, x, y, r, g, b, 255);
+            }
     }
 
     private void ore(int tile, int r, int g, int b, int salt) {
