@@ -6,9 +6,13 @@ import com.minicraft.player.InputState;
 import com.minicraft.player.Player;
 import com.minicraft.render.*;
 import com.minicraft.ui.Font;
+import com.minicraft.ui.FurnaceScreen;
 import com.minicraft.ui.HUD;
 import com.minicraft.ui.InventoryScreen;
 import com.minicraft.world.*;
+
+import java.util.HashMap;
+import java.util.Map;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -28,7 +32,7 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
 public class Game {
-    private enum State { MENU, PLAYING, PAUSED, INVENTORY }
+    private enum State { MENU, PLAYING, PAUSED, INVENTORY, FURNACE }
 
     private final Window window;
     private final Camera camera = new Camera();
@@ -40,6 +44,9 @@ public class Game {
     private final Clouds clouds = new Clouds();
     private final HandRenderer hand = new HandRenderer();
     private final InventoryScreen invScreen = new InventoryScreen();
+    private final FurnaceScreen furnaceScreen = new FurnaceScreen();
+    private final Map<Long, Furnace> furnaces = new HashMap<>();
+    private Furnace openFurnace;
     private final Player player = new Player();
     private final ExecutorService pool;
 
@@ -134,6 +141,12 @@ public class Game {
         String autoStart = System.getenv("MINICRAFT_START_DIM");
         if (autoStart != null) { try { travelTo(Dimension.valueOf(autoStart.toUpperCase()), 0, 0); } catch (Exception ignored) {} }
         if (System.getenv("MINICRAFT_OPEN_INV") != null) openInventory();
+        if (System.getenv("MINICRAFT_OPEN_FURNACE") != null) {
+            openFurnaceAt(0, 64, 0);
+            openFurnace.input.set(Blocks.IRON_ORE, 5);
+            openFurnace.fuel.set(Items.COAL, 3);
+            openFurnace.output.set(Items.IRON_INGOT, 2);
+        }
         String slotEnv = System.getenv("MINICRAFT_SLOT");
         if (slotEnv != null) try { player.inventory.selected = Integer.parseInt(slotEnv); } catch (Exception ignored) {}
     }
@@ -160,6 +173,7 @@ public class Game {
             if (key == GLFW_KEY_ESCAPE) { onEscape(); return; }
             if (state != State.PLAYING) {
                 if (state == State.INVENTORY && key == GLFW_KEY_E) closeInventory();
+                if (state == State.FURNACE && key == GLFW_KEY_E) closeFurnace();
                 return;
             }
             switch (key) {
@@ -185,8 +199,26 @@ public class Game {
             case PLAYING -> { state = State.PAUSED; window.setCursorCaptured(false); }
             case PAUSED -> { state = State.PLAYING; window.setCursorCaptured(true); firstMouse = true; }
             case INVENTORY -> closeInventory();
+            case FURNACE -> closeFurnace();
             case MENU -> {}
         }
+    }
+
+    private void openFurnaceAt(int x, int y, int z) {
+        long key = ((long) (x & 0x3FFFFF) << 42) ^ ((long) (y & 0xFFF) << 30) ^ (z & 0x3FFFFFFF);
+        openFurnace = furnaces.computeIfAbsent(key, k -> new Furnace());
+        state = State.FURNACE;
+        window.setCursorCaptured(false);
+    }
+    private void closeFurnace() {
+        if (!player.inventory.cursor.isEmpty()) {
+            player.inventory.add(player.inventory.cursor.item, player.inventory.cursor.count);
+            player.inventory.cursor.clear();
+        }
+        openFurnace = null;
+        state = State.PLAYING;
+        window.setCursorCaptured(true);
+        firstMouse = true;
     }
 
     private void openInventory() {
@@ -333,7 +365,8 @@ public class Game {
 
         if (rmb && !rmbPrev && lastHit.hit) {
             int hitBlock = world.getBlock(lastHit.bx, lastHit.by, lastHit.bz);
-            if (hitBlock == Blocks.CRAFTING_TABLE) { openInventory(); }
+            if (hitBlock == Blocks.CRAFTING_TABLE) openInventory();
+            else if (hitBlock == Blocks.FURNACE) openFurnaceAt(lastHit.bx, lastHit.by, lastHit.bz);
             else placeBlock();
             startSwing();
         }
@@ -370,6 +403,8 @@ public class Game {
     private void uiClick(boolean right) {
         if (state == State.INVENTORY) {
             invScreen.click(player.inventory, player.mode == Player.Mode.CREATIVE, window.width(), window.height(), mouseX, mouseY, right);
+        } else if (state == State.FURNACE && openFurnace != null) {
+            furnaceScreen.click(player.inventory, openFurnace, window.width(), window.height(), mouseX, mouseY, right);
         } else if (state == State.MENU || state == State.PAUSED) {
             if (right) return;
             int action = menuHit(mouseX, mouseY);
@@ -582,6 +617,10 @@ public class Game {
                 if (state != State.MENU) world.update(camera.position.x, camera.position.z, renderDistance);
             }
 
+            // Furnaces smelt in the background while a world is active.
+            if (state != State.MENU && state != State.PAUSED)
+                for (Furnace fu : furnaces.values()) fu.tick((float) frame);
+
             // Render.
             if (state == State.MENU) {
                 renderMenuScreen();
@@ -589,6 +628,7 @@ public class Game {
                 renderWorld();
                 hud.renderGame(window.width(), window.height(), player);
                 if (state == State.INVENTORY) invScreen.render(hud, window.width(), window.height(), player.inventory, player.mode == Player.Mode.CREATIVE, mouseX, mouseY);
+                else if (state == State.FURNACE && openFurnace != null) furnaceScreen.render(hud, window.width(), window.height(), player.inventory, openFurnace, mouseX, mouseY);
                 else if (state == State.PAUSED) { hud.overlay(window.width(), window.height(), 0, 0, 0, 0.5f); hud.begin(window.width(), window.height()); hud.textCentered("Paused", window.width() / 2f, window.height() * 0.28f, 3f, 1, 1, 1, 1); drawButtons(); hud.end(); }
                 if (player.dead) { hud.overlay(window.width(), window.height(), 0.5f, 0, 0, 0.45f); hud.begin(window.width(), window.height()); hud.textCentered("You Died!  Press R", window.width() / 2f, window.height() / 2f, 3f, 1, 0.9f, 0.9f, 1); hud.end(); }
             }

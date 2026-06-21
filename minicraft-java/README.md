@@ -10,9 +10,27 @@ animated first-person hand.
 |-----------|-----------------------|--------------------|-------------------|
 | ![](../docs/java-menu.png) | ![](../docs/java-world-clouds.png) | ![](../docs/java-inventory.png) | ![](../docs/java-crafting.png) |
 
+| Varied terrain (hills, water, biomes) | Furnace smelting |
+|---------------------------------------|------------------|
+| ![](../docs/java-terrain.png) | ![](../docs/java-furnace.png) |
+
 | Overworld | Nether | End |
 |-----------|--------|-----|
 | ![](../docs/java-overworld.png) | ![](../docs/java-nether.png) | ![](../docs/java-end.png) |
+
+## Latest update
+
+- **Furnace smelting**: right-click a furnace to open it. Input + fuel → output,
+  with a flame gauge and smelt-progress arrow; furnaces keep smelting in the
+  background. Recipes: iron/gold ore → ingots, sand → glass, cobblestone →
+  stone, logs → charcoal, clay → brick. Fuels: coal, planks, logs, sticks.
+  (Iron & gold ore now drop the ore block, so they must be smelted.)
+- **Reworked world generation**: rolling hills and real elevation instead of a
+  flat plain, sharp **mountain ranges**, winding **rivers** carved down to water,
+  oceans/beaches, and more distinct **biomes** (plains, forest, taiga with
+  spruce, snowy, desert, mountains). **Fewer trees**, with oak/birch/spruce
+  chosen per biome, plus more ore types (redstone, lapis, emerald).
+- **Darker textures** tuned closer to vanilla Minecraft's muted palette.
 
 ## What's new
 

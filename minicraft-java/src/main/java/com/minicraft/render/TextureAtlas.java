@@ -231,6 +231,17 @@ public class TextureAtlas {
             for (int x = 3; x < 13; x++) put(END_FRAME, x, y, 60, 120, 90, 255);
 
         generateExtra();
+        darken(0.80f); // muted, closer to vanilla Minecraft
+    }
+
+    /** Multiply every texel's RGB toward darker, vanilla-like tones. */
+    private void darken(float f) {
+        for (int i = 0; i < pixels.length; i += 4) {
+            if ((pixels[i + 3] & 0xFF) == 0) continue;
+            pixels[i] = (byte) clamp((int) ((pixels[i] & 0xFF) * f));
+            pixels[i + 1] = (byte) clamp((int) ((pixels[i + 1] & 0xFF) * f));
+            pixels[i + 2] = (byte) clamp((int) ((pixels[i + 2] & 0xFF) * f));
+        }
     }
 
     private void generateExtra() {

@@ -134,36 +134,8 @@ public class InventoryScreen {
             return;
         }
         ItemStack slot = (t >= 100) ? inv.craft[t - 100] : inv.slots[t];
-        slotClick(slot, cur, right);
+        com.minicraft.ui.Slots.click(slot, cur, right);
         if (t >= 100) refreshCraft(inv);
-    }
-
-    private void slotClick(ItemStack slot, ItemStack cur, boolean right) {
-        if (right) {
-            if (cur.isEmpty() && !slot.isEmpty()) {
-                int half = (slot.count + 1) / 2;
-                cur.set(slot.item, half);
-                slot.count -= half; if (slot.count <= 0) slot.clear();
-            } else if (!cur.isEmpty()) {
-                if (slot.isEmpty()) { slot.set(cur.item, 1); cur.count--; }
-                else if (slot.item == cur.item && slot.count < Items.maxStack(slot.item)) { slot.count++; cur.count--; }
-                if (cur.count <= 0) cur.clear();
-            }
-            return;
-        }
-        if (cur.isEmpty()) {
-            if (!slot.isEmpty()) { cur.set(slot); slot.clear(); }
-        } else if (slot.isEmpty()) {
-            slot.set(cur); cur.clear();
-        } else if (slot.item == cur.item) {
-            int max = Items.maxStack(slot.item);
-            int move = Math.min(cur.count, max - slot.count);
-            slot.count += move; cur.count -= move;
-            if (cur.count <= 0) cur.clear();
-        } else { // swap
-            int it = slot.item, ct = slot.count;
-            slot.set(cur); cur.set(it, ct);
-        }
     }
 
     public void refreshCraft(Inventory inv) {

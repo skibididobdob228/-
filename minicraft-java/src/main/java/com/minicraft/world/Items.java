@@ -91,8 +91,9 @@ public final class Items {
             case Blocks.GRASS -> Blocks.DIRT;
             case Blocks.STONE -> Blocks.COBBLE;
             case Blocks.COAL_ORE -> COAL;
-            case Blocks.IRON_ORE -> IRON_INGOT;
-            case Blocks.GOLD_ORE -> GOLD_INGOT;
+            // Iron & gold ore must be smelted in a furnace into ingots.
+            case Blocks.IRON_ORE -> Blocks.IRON_ORE;
+            case Blocks.GOLD_ORE -> Blocks.GOLD_ORE;
             case Blocks.DIAMOND_ORE -> DIAMOND;
             case Blocks.REDSTONE_ORE -> REDSTONE;
             case Blocks.LAPIS_ORE -> LAPIS;
