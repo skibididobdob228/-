@@ -18,6 +18,27 @@ animated first-person hand.
 |-----------|--------|-----|
 | ![](../docs/java-overworld.png) | ![](../docs/java-nether.png) | ![](../docs/java-end.png) |
 
+## Newest update
+
+- **Mobs**: passive **sheep** that wander and drop wool, and hostile **zombies**
+  that chase and attack at night. Melee them with left-click (swords/axes hit
+  harder); they have health, knockback and simple AABB-physics AI.
+- **Chests**: place a chest and right-click to open 27 slots of storage; contents
+  are saved with the world (and spill out if you break it).
+- **Furnaces persist**: furnace contents and smelting state are now saved too.
+- **Procedural sound**: footsteps, digging, block break/place, jump and hurt
+  cues are **synthesised in code** at runtime via OpenAL (no audio files are
+  used, so nothing is copied from Minecraft). Material-aware (stone/wood/dirt/
+  sand/glass/wool). Silently disabled when no audio device is present.
+- **Textures closer to vanilla**: muted palette, cobblestone with mortar,
+  speckled dirt/gravel, varied grass blades, sparse stone flecks.
+- **Generation closer to vanilla**: ores now form small **veins** instead of
+  single dots (on top of the earlier hills/mountains/rivers/biomes rework).
+
+| Mobs (sheep & zombies) | Chest storage |
+|------------------------|---------------|
+| ![](../docs/java-mobs.png) | ![](../docs/java-chest.png) |
+
 ## Latest update
 
 - **Furnace smelting**: right-click a furnace to open it. Input + fuel → output,
@@ -94,7 +115,8 @@ break/place · wheel or `1`–`9` select hotbar · `E` inventory · `G` game mod
 Overworld/Nether/End · `F5` first/third person · `F3` debug · `F2` screenshot ·
 `F11` fullscreen · `R` respawn · `Esc` pause/menu.
 
-Right-click a **crafting table** to open the crafting grid. In creative, the
+Right-click a **crafting table** for the crafting grid, a **furnace** to smelt,
+or a **chest** for storage. Left-click a mob to attack it. In creative, the
 inventory is an item palette — click an item to grab it, then drop it on the
 hotbar.
 

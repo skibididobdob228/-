@@ -1,10 +1,14 @@
 package com.minicraft;
 
 import com.minicraft.assets.AssetLoader;
+import com.minicraft.audio.Sound;
 import com.minicraft.core.Window;
+import com.minicraft.entity.EntityManager;
+import com.minicraft.entity.Entity;
 import com.minicraft.player.InputState;
 import com.minicraft.player.Player;
 import com.minicraft.render.*;
+import com.minicraft.ui.ChestScreen;
 import com.minicraft.ui.Font;
 import com.minicraft.ui.FurnaceScreen;
 import com.minicraft.ui.HUD;
@@ -32,7 +36,7 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
 public class Game {
-    private enum State { MENU, PLAYING, PAUSED, INVENTORY, FURNACE }
+    private enum State { MENU, PLAYING, PAUSED, INVENTORY, FURNACE, CHEST }
 
     private final Window window;
     private final Camera camera = new Camera();
@@ -45,10 +49,19 @@ public class Game {
     private final HandRenderer hand = new HandRenderer();
     private final InventoryScreen invScreen = new InventoryScreen();
     private final FurnaceScreen furnaceScreen = new FurnaceScreen();
+    private final ChestScreen chestScreen = new ChestScreen();
     private final Map<Long, Furnace> furnaces = new HashMap<>();
+    private final Map<Long, Container> chests = new HashMap<>();
     private Furnace openFurnace;
+    private Container openChest;
+    private final Sound sound = new Sound();
+    private final EntityManager entityManager = new EntityManager();
+    private final EntityRenderer entityRenderer = new EntityRenderer();
     private final Player player = new Player();
     private final ExecutorService pool;
+
+    private boolean prevOnGround = true;
+    private float prevHealth = 20f, stepTimer;
 
     private final World[] worlds = new World[3];
     private World world;
@@ -91,6 +104,9 @@ public class Game {
         font.bake();
         clouds.init();
         hand.init();
+        entityRenderer.init();
+        sound.init();
+        entityManager.sound = sound;
 
         int cores = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
         pool = Executors.newFixedThreadPool(cores, r -> { Thread t = new Thread(r, "chunk-worker"); t.setDaemon(true); return t; });
@@ -118,6 +134,7 @@ public class Game {
         player.dead = false; player.health = 20; player.hunger = 20;
         if (!useSave) {
             for (World w : worlds) w.clearEdits();
+            furnaces.clear(); chests.clear(); entityManager.clear();
             dim = Dimension.OVERWORLD; world = worlds[0];
             for (int i = 0; i < player.inventory.slots.length; i++) player.inventory.slots[i].clear();
             if (mode == Player.Mode.CREATIVE) player.inventory.giveCreativeHotbar();
@@ -149,6 +166,23 @@ public class Game {
         }
         String slotEnv = System.getenv("MINICRAFT_SLOT");
         if (slotEnv != null) try { player.inventory.selected = Integer.parseInt(slotEnv); } catch (Exception ignored) {}
+        if (System.getenv("MINICRAFT_SPAWN_MOBS") != null) spawnDebugMobs();
+        if (System.getenv("MINICRAFT_OPEN_CHEST") != null) {
+            openChestAt(0, 64, 0);
+            openChest.slots[0].set(Blocks.DIAMOND_ORE, 12);
+            openChest.slots[1].set(Items.IRON_INGOT, 30);
+            openChest.slots[2].set(Blocks.LOG, 64);
+            openChest.slots[10].set(Items.DIAMOND, 5);
+        }
+    }
+
+    private void spawnDebugMobs() {
+        int sx = (int) player.position.x, sz = (int) player.position.z;
+        int sy = (int) player.position.y;
+        com.minicraft.entity.Sheep a = new com.minicraft.entity.Sheep(); a.position.set(sx + 3.5f, sy + 1, sz + 2.5f);
+        com.minicraft.entity.Sheep b = new com.minicraft.entity.Sheep(); b.position.set(sx + 5.5f, sy + 1, sz + 4.5f);
+        com.minicraft.entity.Zombie z = new com.minicraft.entity.Zombie(); z.position.set(sx + 4.5f, sy + 1, sz - 3.5f);
+        entityManager.entities().add(a); entityManager.entities().add(b); entityManager.entities().add(z);
     }
 
     private void setupSelectionBox() {
@@ -174,6 +208,7 @@ public class Game {
             if (state != State.PLAYING) {
                 if (state == State.INVENTORY && key == GLFW_KEY_E) closeInventory();
                 if (state == State.FURNACE && key == GLFW_KEY_E) closeFurnace();
+                if (state == State.CHEST && key == GLFW_KEY_E) closeChest();
                 return;
             }
             switch (key) {
@@ -200,13 +235,32 @@ public class Game {
             case PAUSED -> { state = State.PLAYING; window.setCursorCaptured(true); firstMouse = true; }
             case INVENTORY -> closeInventory();
             case FURNACE -> closeFurnace();
+            case CHEST -> closeChest();
             case MENU -> {}
         }
     }
 
+    private long blockKey(int x, int y, int z) {
+        return ((long) (x & 0x3FFFFF) << 42) ^ ((long) (y & 0xFFF) << 30) ^ (z & 0x3FFFFFFF);
+    }
+    private void openChestAt(int x, int y, int z) {
+        openChest = chests.computeIfAbsent(blockKey(x, y, z), k -> new Container());
+        state = State.CHEST;
+        window.setCursorCaptured(false);
+    }
+    private void closeChest() {
+        if (!player.inventory.cursor.isEmpty()) {
+            player.inventory.add(player.inventory.cursor.item, player.inventory.cursor.count);
+            player.inventory.cursor.clear();
+        }
+        openChest = null;
+        state = State.PLAYING;
+        window.setCursorCaptured(true);
+        firstMouse = true;
+    }
+
     private void openFurnaceAt(int x, int y, int z) {
-        long key = ((long) (x & 0x3FFFFF) << 42) ^ ((long) (y & 0xFFF) << 30) ^ (z & 0x3FFFFFFF);
-        openFurnace = furnaces.computeIfAbsent(key, k -> new Furnace());
+        openFurnace = furnaces.computeIfAbsent(blockKey(x, y, z), k -> new Furnace());
         state = State.FURNACE;
         window.setCursorCaptured(false);
     }
@@ -257,6 +311,7 @@ public class Game {
     private void travelTo(Dimension target, float x, float z) {
         if (target == dim) return;
         dim = target; world = worlds[target.ordinal()];
+        entityManager.clear(); // mobs belong to the dimension they were in
         int ix = (int) Math.floor(x), iz = (int) Math.floor(z);
         for (int i = 0; i < 300; i++) {
             world.update(x, z, renderDistance);
@@ -347,19 +402,25 @@ public class Game {
         boolean rmb = window.mouseDown(GLFW_MOUSE_BUTTON_RIGHT);
         lastHit = world.raycast(camera.position, camera.front(), 6f);
 
+        // Left click press: attack a mob in front if there is one.
+        if (lmb && !lmbPrev) {
+            startSwing();
+            if (entityManager.attack(player, camera, 3.5f, attackDamage())) { lmbPrev = true; rmbPrev = rmb; return; }
+        }
+
         if (lmb && lastHit.hit) {
-            if (!lmbPrev) startSwing();
             int target = world.getBlock(lastHit.bx, lastHit.by, lastHit.bz);
             float hardness = Blocks.get(target).hardness;
             if (hardness < 0) { /* unbreakable */ }
             else if (player.mode == Player.Mode.CREATIVE) {
-                if (!lmbPrev) breakBlock(lastHit.bx, lastHit.by, lastHit.bz, false);
+                if (!lmbPrev) breakBlock(lastHit.bx, lastHit.by, lastHit.bz);
             } else {
                 if (breakingX != lastHit.bx || breakingY != lastHit.by || breakingZ != lastHit.bz) {
                     breakingX = lastHit.bx; breakingY = lastHit.by; breakingZ = lastHit.bz; breakProgress = 0;
+                    sound.playDig(target);
                 }
                 breakProgress += dt / Math.max(hardness, 0.05f);
-                if (breakProgress >= 1f) { breakBlock(lastHit.bx, lastHit.by, lastHit.bz, true); breakProgress = 0; }
+                if (breakProgress >= 1f) { breakBlock(lastHit.bx, lastHit.by, lastHit.bz); breakProgress = 0; }
             }
         } else breakProgress = 0;
 
@@ -367,18 +428,36 @@ public class Game {
             int hitBlock = world.getBlock(lastHit.bx, lastHit.by, lastHit.bz);
             if (hitBlock == Blocks.CRAFTING_TABLE) openInventory();
             else if (hitBlock == Blocks.FURNACE) openFurnaceAt(lastHit.bx, lastHit.by, lastHit.bz);
+            else if (hitBlock == Blocks.CHEST) openChestAt(lastHit.bx, lastHit.by, lastHit.bz);
             else placeBlock();
             startSwing();
         }
         lmbPrev = lmb; rmbPrev = rmb;
     }
 
-    private void breakBlock(int x, int y, int z, boolean survival) {
+    private float attackDamage() {
+        ItemStack s = player.inventory.selectedStack();
+        if (s.isEmpty()) return 2f;
+        Items.Def d = Items.get(s.item);
+        if (d.tool == Items.Tool.SWORD) return 4f + d.tier * 1.5f;
+        if (d.tool == Items.Tool.AXE) return 3f + d.tier;
+        return 2f;
+    }
+
+    private void breakBlock(int x, int y, int z) {
         int b = world.getBlock(x, y, z);
+        if (Blocks.get(b).hardness < 0) return;
         world.setBlock(x, y, z, Blocks.AIR);
+        sound.playBreak(b);
+        // Clean up / drop block-entity contents.
+        long key = blockKey(x, y, z);
+        furnaces.remove(key);
+        Container chest = chests.remove(key);
+        if (b == Blocks.GRASS || b == Blocks.SAND || b == Blocks.GRAVEL) sound.playDig(b);
         if (player.mode == Player.Mode.SURVIVAL) {
             int drop = Items.dropFor(b);
             if (drop >= 0) player.inventory.add(drop, 1);
+            if (chest != null) for (ItemStack s : chest.slots) if (!s.isEmpty()) player.inventory.add(s.item, s.count);
         }
     }
 
@@ -394,6 +473,7 @@ public class Game {
         if (overlap && Blocks.isSolid(id)) return;
         if (player.mode == Player.Mode.SURVIVAL && !player.inventory.consumeSelected()) return;
         world.setBlock(px, py, pz, id);
+        sound.playPlace(id);
     }
 
     private void startSwing() { swingTime = 0.28f; }
@@ -405,6 +485,8 @@ public class Game {
             invScreen.click(player.inventory, player.mode == Player.Mode.CREATIVE, window.width(), window.height(), mouseX, mouseY, right);
         } else if (state == State.FURNACE && openFurnace != null) {
             furnaceScreen.click(player.inventory, openFurnace, window.width(), window.height(), mouseX, mouseY, right);
+        } else if (state == State.CHEST && openChest != null) {
+            chestScreen.click(player.inventory, openChest, window.width(), window.height(), mouseX, mouseY, right);
         } else if (state == State.MENU || state == State.PAUSED) {
             if (right) return;
             int action = menuHit(mouseX, mouseY);
@@ -459,6 +541,12 @@ public class Game {
 
     // --- Rendering ---
 
+    private boolean isNight() {
+        if (!dim.hasSky) return false;
+        float t = (float) ((worldTime % dayLength) / dayLength);
+        return Math.sin(t * 6.2831853f) < -0.05f;
+    }
+
     private float dayNight(Vector3f outSky, Vector3f outSun) {
         float dayLight;
         if (dim.hasSky) {
@@ -504,6 +592,11 @@ public class Game {
         chunkShader.set("uAlphaCutout", 1);
         glDisable(GL_BLEND);
         world.renderOpaque(chunkShader, camera);
+
+        // Mobs.
+        entityRenderer.begin(view, proj, sun, dayLight, dim.ambient, sky, fogStart, fogEnd, camera.position);
+        for (Entity e : entityManager.entities()) entityRenderer.render(e);
+        entityRenderer.end();
 
         if (dim.hasSky) clouds.render(view, proj, camera.position, 112f, (float) worldTime, sky, 420f);
 
@@ -611,6 +704,19 @@ public class Game {
                 handleInteraction((float) frame);
                 checkPortalTravel((float) frame);
                 world.update(camera.position.x, camera.position.z, renderDistance);
+                entityManager.update(world, player, (float) frame, isNight(), dim == Dimension.OVERWORLD);
+
+                // Footsteps, jump and hurt cues.
+                stepTimer -= (float) frame;
+                if (player.onGround && hspeed > 1.5f && stepTimer <= 0) {
+                    int below = world.getBlock((int) Math.floor(player.position.x), (int) Math.floor(player.position.y - 0.1f), (int) Math.floor(player.position.z));
+                    if (below != Blocks.AIR) sound.playStep(below);
+                    stepTimer = 0.34f;
+                }
+                if (prevOnGround && !player.onGround && player.velocity.y > 0.1f) sound.playJump();
+                prevOnGround = player.onGround;
+                if (player.health < prevHealth - 0.4f) sound.playHurt();
+                prevHealth = player.health;
             } else {
                 acc = 0;
                 // keep streaming so the frozen world stays loaded behind menus
@@ -629,6 +735,7 @@ public class Game {
                 hud.renderGame(window.width(), window.height(), player);
                 if (state == State.INVENTORY) invScreen.render(hud, window.width(), window.height(), player.inventory, player.mode == Player.Mode.CREATIVE, mouseX, mouseY);
                 else if (state == State.FURNACE && openFurnace != null) furnaceScreen.render(hud, window.width(), window.height(), player.inventory, openFurnace, mouseX, mouseY);
+                else if (state == State.CHEST && openChest != null) chestScreen.render(hud, window.width(), window.height(), player.inventory, openChest, mouseX, mouseY);
                 else if (state == State.PAUSED) { hud.overlay(window.width(), window.height(), 0, 0, 0, 0.5f); hud.begin(window.width(), window.height()); hud.textCentered("Paused", window.width() / 2f, window.height() * 0.28f, 3f, 1, 1, 1, 1); drawButtons(); hud.end(); }
                 if (player.dead) { hud.overlay(window.width(), window.height(), 0.5f, 0, 0, 0.45f); hud.begin(window.width(), window.height()); hud.textCentered("You Died!  Press R", window.width() / 2f, window.height() / 2f, 3f, 1, 0.9f, 0.9f, 1); hud.end(); }
             }
@@ -645,18 +752,34 @@ public class Game {
         if (state != State.MENU) save();
         pool.shutdownNow();
         for (World w : worlds) w.shutdownGpu();
+        sound.shutdown();
         window.destroy();
     }
 
     // --- Save / load ---
 
+    private static void writeStack(DataOutputStream out, ItemStack s) throws IOException { out.writeInt(s.item); out.writeInt(s.count); }
+    private static void readStack(DataInputStream in, ItemStack s) throws IOException { s.item = in.readInt(); s.count = in.readInt(); }
+
     private void save() {
         try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(savePath)))) {
-            out.writeInt(0x4D435732); out.writeLong(seed); out.writeInt(dim.ordinal()); out.writeInt(player.mode.ordinal());
+            out.writeInt(0x4D435733); out.writeLong(seed); out.writeInt(dim.ordinal()); out.writeInt(player.mode.ordinal());
             out.writeFloat(player.position.x); out.writeFloat(player.position.y); out.writeFloat(player.position.z);
-            // inventory
-            for (ItemStack s : player.inventory.slots) { out.writeInt(s.item); out.writeInt(s.count); }
+            for (ItemStack s : player.inventory.slots) writeStack(out, s);
             for (World w : worlds) w.writeEdits(out);
+
+            out.writeInt(furnaces.size());
+            for (Map.Entry<Long, Furnace> e : furnaces.entrySet()) {
+                out.writeLong(e.getKey());
+                Furnace f = e.getValue();
+                writeStack(out, f.input); writeStack(out, f.fuel); writeStack(out, f.output);
+            }
+            out.writeInt(chests.size());
+            for (Map.Entry<Long, Container> e : chests.entrySet()) {
+                out.writeLong(e.getKey());
+                for (ItemStack s : e.getValue().slots) writeStack(out, s);
+            }
+            entityManager.writeSave(out);
         } catch (IOException e) { System.out.println("[WARN] save failed: " + e.getMessage()); }
     }
 
@@ -664,14 +787,32 @@ public class Game {
         File f = new File(savePath);
         if (!f.isFile()) return;
         try (DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(f)))) {
-            if (in.readInt() != 0x4D435732) return;
+            if (in.readInt() != 0x4D435733) return;
             in.readLong();
             savedDim = Math.max(0, Math.min(2, in.readInt()));
             int modeOrd = in.readInt();
             player.mode = Player.Mode.values()[Math.max(0, Math.min(2, modeOrd))];
             savedPos = new float[]{in.readFloat(), in.readFloat(), in.readFloat()};
-            for (ItemStack s : player.inventory.slots) { s.item = in.readInt(); s.count = in.readInt(); }
+            for (ItemStack s : player.inventory.slots) readStack(in, s);
             for (World w : worlds) w.readEdits(in);
+
+            furnaces.clear();
+            int nf = in.readInt();
+            for (int i = 0; i < nf; i++) {
+                long k = in.readLong();
+                Furnace fu = new Furnace();
+                readStack(in, fu.input); readStack(in, fu.fuel); readStack(in, fu.output);
+                furnaces.put(k, fu);
+            }
+            chests.clear();
+            int nc = in.readInt();
+            for (int i = 0; i < nc; i++) {
+                long k = in.readLong();
+                Container c = new Container();
+                for (ItemStack s : c.slots) readStack(in, s);
+                chests.put(k, c);
+            }
+            entityManager.readSave(in);
             hasSave = true;
             System.out.println("[INFO] Save found (dim " + savedDim + ")");
         } catch (IOException e) { System.out.println("[WARN] load failed: " + e.getMessage()); }

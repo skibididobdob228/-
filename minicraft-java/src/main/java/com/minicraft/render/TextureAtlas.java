@@ -85,12 +85,12 @@ public class TextureAtlas {
     }
 
     private void generate() {
-        fillNoise(STONE, 128, 128, 132, 0.10f, 1);
-        fillNoise(COBBLE, 120, 120, 124, 0.22f, 2);
+        stoneTex(STONE, 127, 127, 127, 0.09f, 1);
+        cobbleTex(COBBLE, 122, 122, 122);
         fillNoise(BEDROCK, 70, 70, 74, 0.30f, 3);
-        fillNoise(GRAVEL, 130, 122, 118, 0.28f, 4);
-        fillNoise(DIRT, 134, 96, 67, 0.12f, 5);
-        fillNoise(GRASS_TOP, 86, 145, 62, 0.14f, 6);
+        speckle(GRAVEL, 136, 130, 124, 110, 100, 92, 4);
+        speckle(DIRT, 134, 98, 66, 110, 78, 52, 5);
+        grassTopTex(GRASS_TOP, 95, 150, 66);
         for (int y = 0; y < TILE_PX; y++)
             for (int x = 0; x < TILE_PX; x++) {
                 float n = (h01(x, y, 7) - 0.5f) * 0.2f;
@@ -364,6 +364,49 @@ public class TextureAtlas {
         tool(ITEM_SWORD_WOOD, 150, 110, 70, 3);
         tool(ITEM_SWORD_STONE, 130, 130, 134, 3);
         tool(ITEM_SWORD_IRON, 220, 200, 185, 3);
+    }
+
+    private void stoneTex(int tile, int r, int g, int b, float grain, int salt) {
+        for (int y = 0; y < TILE_PX; y++)
+            for (int x = 0; x < TILE_PX; x++) {
+                float n = (h01(x, y, salt) - 0.5f) * 2f * grain;
+                float dark = h01(x, y, salt + 50) > 0.93f ? -0.18f : 0f; // sparse darker flecks
+                put(tile, x, y, (int) (r * (1 + n + dark)), (int) (g * (1 + n + dark)), (int) (b * (1 + n + dark)), 255);
+            }
+    }
+
+    /** Rounded cobblestones separated by darker mortar lines. */
+    private void cobbleTex(int tile, int r, int g, int b) {
+        for (int y = 0; y < TILE_PX; y++)
+            for (int x = 0; x < TILE_PX; x++) {
+                int cellX = x / 4, cellY = ((x / 4) % 2 == 0) ? y / 5 : (y + 2) / 5;
+                float cellTone = 0.8f + h01(cellX, cellY, 200) * 0.45f;
+                boolean mortar = (x % 4 == 0) || (((x / 4) % 2 == 0) ? (y % 5 == 0) : ((y + 2) % 5 == 0));
+                float n = (h01(x, y, 201) - 0.5f) * 0.12f;
+                if (mortar) put(tile, x, y, (int) (r * 0.55f), (int) (g * 0.55f), (int) (b * 0.55f), 255);
+                else put(tile, x, y, (int) (r * cellTone * (1 + n)), (int) (g * cellTone * (1 + n)), (int) (b * cellTone * (1 + n)), 255);
+            }
+    }
+
+    /** Base colour with scattered specks of a second colour (dirt/gravel). */
+    private void speckle(int tile, int r, int g, int b, int sr, int sg, int sb, int salt) {
+        for (int y = 0; y < TILE_PX; y++)
+            for (int x = 0; x < TILE_PX; x++) {
+                float n = (h01(x, y, salt) - 0.5f) * 0.18f;
+                if (h01(x, y, salt + 7) > 0.82f) put(tile, x, y, sr, sg, sb, 255);
+                else put(tile, x, y, (int) (r * (1 + n)), (int) (g * (1 + n)), (int) (b * (1 + n)), 255);
+            }
+    }
+
+    /** Grass top: muted green with blades of grass of varying shade. */
+    private void grassTopTex(int tile, int r, int g, int b) {
+        for (int y = 0; y < TILE_PX; y++)
+            for (int x = 0; x < TILE_PX; x++) {
+                float v = h01(x, y, 210);
+                float shade = v > 0.85f ? 1.22f : v < 0.15f ? 0.78f : 1f;
+                float n = (h01(x, y, 211) - 0.5f) * 0.12f;
+                put(tile, x, y, (int) (r * shade * (1 + n)), (int) (g * shade * (1 + n)), (int) (b * shade * (1 + n)), 255);
+            }
     }
 
     private void planks(int tile, int r, int g, int b) {

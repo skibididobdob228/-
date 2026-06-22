@@ -125,6 +125,7 @@ public class TerrainGenerator {
                         float cv = cave.fbm3(wx * 0.04f, y * 0.06f, wz * 0.04f, 3);
                         if (cv > 0.55f && y > 2 && y < h - 1) blk = Blocks.AIR;
                     }
+                    int preOre = blk;
                     if (blk == Blocks.STONE) {
                         float o = rnd(wx, y, wz, 99);
                         if (y < 14 && o > 0.992f) blk = Blocks.DIAMOND_ORE;
@@ -137,6 +138,9 @@ public class TerrainGenerator {
                         else if (o < 0.010f) blk = Blocks.GRAVEL;
                     }
                     c.set(x, y, z, blk);
+                    // Grow a small vein downward so ores cluster instead of dotting.
+                    if (blk != preOre && y > 1 && c.get(x, y - 1, z) == Blocks.STONE && rnd(wx, y, wz, 150) > 0.35f)
+                        c.set(x, y - 1, z, blk);
                 }
             }
 
